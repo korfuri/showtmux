@@ -20,13 +20,14 @@ This presentation will walk you through the basic features of showtmux.""")
         self.cmd('emacs foo.cc')
 
         self.wait('We can type text')
-        self.raw("""#include <iostream>
+        self.raw('#include <iostream>\n')
+        self.raw("""
 
 int main() {
   std::cout << "Hello, world!" << std::endl;
   return 0;
 }
-""")
+""", sleep=False)
 
         self.wait('We can send complex key presses, such as emacs shortcuts')
         self.note('Ctrl-x Ctrl-s to save, Ctrl-x Ctrl-c to quit emacs')

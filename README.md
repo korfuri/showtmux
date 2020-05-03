@@ -23,13 +23,15 @@ p = MyPresentation()
 p.run()
 ```
 
+See `presentation.py` for a more complete example.
+
 ## Requirements
 
-* tmux
+* tmux >1.9
 
-Optional (but recommended):
+Optional, but works well with showtmux:
 
-* `pip install sty` for colored output in the speaker terminal;
-* `caca-utils` to display images in the terminal;
+* `caca-utils` to display images in the terminal (not in a
+  framebuffer! you can't use framebuffers with tmux);
 * `mdp` if you want to have non-interactive, really-cool looking
   slides in addition to your interactive demo.
