@@ -4,6 +4,8 @@ Showtmux creates terminal-based interactive presentations. It can be
 used to script terminal-based demos ahead of time, and play them in
 tmux.
 
+[![asciicast](https://asciinema.org/a/326518.svg)](https://asciinema.org/a/326518)
+
 ## How it works
 
 You create a presentation in code as such:
