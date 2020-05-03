@@ -157,4 +157,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Virtualenvs
+env/
+venv/
+
 # End of https://www.gitignore.io/api/python,emacs
