@@ -11,24 +11,35 @@ import tempfile
 import textwrap
 import time
 
+
 def readfile(f):
     return open(f, "rb").read()
+
 
 def random_handle():
     return "".join(random.choice(string.ascii_lowercase) for _ in range(6))
 
+
 class UserQuitException(Exception):
     """An exception class that signals that the user intends to quit presenting."""
+
     pass
+
 
 class FatalError(Exception):
     """An exception used when showtmux needs to terminate, but tmux is still running."""
+
     def __init__(self, connectline):
         super(FatalError, self).__init__(
-            ('showtmux encountered an error, but tmux is still '
-             'running. You can connect to it by running '
-             '`{connectline}` and finish the presentation by hand.'.
-             format(connectline=connectline)))
+            (
+                "showtmux encountered an error, but tmux is still "
+                "running. You can connect to it by running "
+                "`{connectline}` and finish the presentation by hand.".format(
+                    connectline=connectline
+                )
+            )
+        )
+
 
 class Presentation(object):
     """Presentations contain all the state and methods to manage a
@@ -96,26 +107,35 @@ class Presentation(object):
             env=self.environment(),
             shell_cmd=self.first_window_command(),
         )
-        self._log("showtmux session created. Run: tmux -L {socket} attach\n".format(socket=self.socket))
+        self._log(
+            "showtmux session created. Run: tmux -L {socket} attach\n".format(
+                socket=self.socket
+            )
+        )
         try:
             self.present()
             while True:
                 self._set_status(self.ENDED)
                 self._await_keypress()
-                self._log('The presentation has ended. Press "t" to enter tmux, or "q" to quit.\n')
+                self._log(
+                    'The presentation has ended. Press "t" to enter tmux, or "q" to quit.\n'
+                )
 
         except UserQuitException:
             return
         except Exception as e:
 
             self._tmux_kill_server()  ## TODO
-            raise FatalError('tmux -L {socket} attach'.format(socket=self.socket)) from e
+            raise FatalError(
+                "tmux -L {socket} attach".format(socket=self.socket)
+            ) from e
 
     def _speedy(self):
         """Returns true if fast-typing mode is active."""
-        return os.environ.get("SHOWTMUX_SPEEDY", '0') != '0'
+        return os.environ.get("SHOWTMUX_SPEEDY", "0") != "0"
 
     dotfiles = dict()
+
     def _make_dotfiles(self):
         """Copies the actual dotfiles and media files to the working directory."""
         for filename, contents in self.dotfiles_templates().items():
@@ -139,11 +159,11 @@ class Presentation(object):
         new session).
 
         """
-        assert(self.socket is not None)
+        assert self.socket is not None
         sh = "{prefix} tmux -L {socket} {cmd}".format(
             prefix=prefix, socket=self.socket, cmd=cmd
         )
-        self._debug('Running command: {}'.format(sh))
+        self._debug("Running command: {}".format(sh))
         result = None
         output = ""
         try:
@@ -155,8 +175,9 @@ class Presentation(object):
         if result != 0:
             self._debug("tmux returned code {}".format(result))
         if output:
-            self._debug("tmux output: " + output.decode("utf-8", errors="backslashescape"))
-
+            self._debug(
+                "tmux output: " + output.decode("utf-8", errors="backslashescape")
+            )
 
     def _tmux_new_session(self, window_name=None, shell_cmd=None, env=None, wd=None):
         """Create a new tmux session.
@@ -198,6 +219,7 @@ class Presentation(object):
         self._tmux_opts = tmux_opts
 
     _tmux_escape_translation = str.maketrans({";": ";;"})
+
     def _tmux_escape(self, s):
         """Escapes a list of key codes for tmux.
 
@@ -242,17 +264,19 @@ class Presentation(object):
         """Logs a message (if in debug mode)."""
         if os.environ.get("SHOWTMUX_DEBUG", False):
             self.logwin.addstr(message, curses.COLOR_RED)
-            self.logwin.addch('\n')
+            self.logwin.addch("\n")
             self.logwin.refresh()
 
-    PAUSED  = u'\U000023f8\tPaused'
-    PLAYING = u'\U000023e9\tPlaying'
-    ENDED   = u'\U0001f3c1\tComplete'
+    PAUSED = u"\U000023f8\tPaused"
+    PLAYING = u"\U000023e9\tPlaying"
+    ENDED = u"\U0001f3c1\tComplete"
 
     def _set_status(self, status):
         """Set the status-line."""
         if self.socket is not None:
-            line = '{status}\t$ tmux -L {socket} attach'.format(status=status, socket=self.socket)
+            line = "{status}\t$ tmux -L {socket} attach".format(
+                status=status, socket=self.socket
+            )
         else:
             line = status
         self.statuswin.addstr(0, 0, line, curses.A_BOLD)
@@ -261,15 +285,17 @@ class Presentation(object):
 
     def _log_separator(self):
         """Log a horizontal separator with a prompt for common actions."""
-        hintline = ['n', 'ext/attach ', 't', 'mux/', 'q', 'uit/', 'h', 'elp']
-        hintline_len = len(''.join(hintline))
+        hintline = ["n", "ext/attach ", "t", "mux/", "q", "uit/", "h", "elp"]
+        hintline_len = len("".join(hintline))
         hintline_starts = max(0, curses.COLS - hintline_len)
         x = hintline_starts
         if hintline_starts > 5:
-            self.logwin.addstr(''.join('=' for _ in range(hintline_starts - 1)), curses.A_DIM)
-            self.logwin.addch(' ')
+            self.logwin.addstr(
+                "".join("=" for _ in range(hintline_starts - 1)), curses.A_DIM
+            )
+            self.logwin.addch(" ")
         else:
-            self.logwin.addstr(''.join(' ' for _ in range(hintline_starts)))
+            self.logwin.addstr("".join(" " for _ in range(hintline_starts)))
         bold = True
         for h in hintline:
             self.logwin.addstr(h, curses.A_BOLD if bold else curses.A_DIM)
@@ -292,22 +318,39 @@ class Presentation(object):
             c = self.scr.getch()
             if c == curses.KEY_RESIZE:
                 pass
-            elif c in [ord('n'), ord('l'), ord('j'), curses.KEY_DOWN, curses.KEY_RIGHT, curses.KEY_NPAGE, curses.KEY_ENTER, ord(' '), ord('\n'), ord('\r')]:
+            elif c in [
+                ord("n"),
+                ord("l"),
+                ord("j"),
+                curses.KEY_DOWN,
+                curses.KEY_RIGHT,
+                curses.KEY_NPAGE,
+                curses.KEY_ENTER,
+                ord(" "),
+                ord("\n"),
+                ord("\r"),
+            ]:
                 return  # We simply return and continue with the script
-            elif c in [ord('?'), ord('h')]:
-                self._log('showtmux help\n', curses.A_BOLD)
-                self._log("""Available keys:
+            elif c in [ord("?"), ord("h")]:
+                self._log("showtmux help\n", curses.A_BOLD)
+                self._log(
+                    """Available keys:
 next step             n, l, j, space, enter, Right/Down, PgDown
 quit                  q
 help (this text)      ?, h
 enter tmux            t, C-a, C-b      Use <prefix>-d to detach tmux
 kill server           K                Disconnects all clients and quits
-""")
-            elif c == ord('q'):
+"""
+                )
+            elif c == ord("q"):
                 raise UserQuitException()
-            elif c in [ord('t'), curses.ascii.ctrl(ord('a')), curses.ascii.ctrl(ord('b'))]:
+            elif c in [
+                ord("t"),
+                curses.ascii.ctrl(ord("a")),
+                curses.ascii.ctrl(ord("b")),
+            ]:
                 self._enter_tmux()
-            elif c == ord('K'):
+            elif c == ord("K"):
                 self._tmux_kill_server()
                 raise UserQuitException()
             else:
@@ -320,6 +363,7 @@ kill server           K                Disconnects all clients and quits
 
         This suspends the curses window temporarily.
         """
+
         class SuspendCurses(object):
             def __enter__(self):
                 curses.endwin()
@@ -330,13 +374,18 @@ kill server           K                Disconnects all clients and quits
                 curses.doupdate()
 
         with SuspendCurses():
-            os.system('tmux -L {socket} attach'.format(socket=self.socket))
+            os.system("tmux -L {socket} attach".format(socket=self.socket))
 
     def _linewrap(self, text):
         """Wrap text to fit in the current terminal size.
 
         This respects existing newlines, and wraps each paragraph separately with textwrap.wrap."""
-        return '\n'.join(['\n'.join(textwrap.wrap(l, curses.COLS - 1, replace_whitespace=False)) for l in text.split('\n')])
+        return "\n".join(
+            [
+                "\n".join(textwrap.wrap(l, curses.COLS - 1, replace_whitespace=False))
+                for l in text.split("\n")
+            ]
+        )
 
     ###################################
     #### Helpers for child classes ####
@@ -364,7 +413,6 @@ kill server           K                Disconnects all clients and quits
         if c[-1] != "\n":
             self.raw("\n", target=target)
 
-
     def banner(self, handle, bannertext):  # TODO redo this
         self.tmux(
             "send-keys {t} 'clear; figlet -c -W  '{text}' \n'".format(
@@ -374,7 +422,7 @@ kill server           K                Disconnects all clients and quits
 
     def wait(self, note):
         """Display a note, and wait for speaker interaction."""
-        self._log('Next:\n{}\n'.format(note))
+        self._log("Next:\n{}\n".format(note))
         self._set_status(self.PAUSED)
         self._await_keypress()
         self._set_status(self.PLAYING)
@@ -398,10 +446,9 @@ kill server           K                Disconnects all clients and quits
         """Switch to the given tmux window."""
         self.tmux("select-window -t {}".format(window_name))
 
-
     def note(self, note):
         """Display a speaker note."""
-        self._log('Note:\n{}\n'.format(self._linewrap(note)))
+        self._log("Note:\n{}\n".format(self._linewrap(note)))
 
     def sleep(self, duration):
         """Sleeps for the given time.
@@ -423,7 +470,7 @@ kill server           K                Disconnects all clients and quits
         """
         if shell_cmd is None:
             shell_cmd = self.shell()
-        self.wait("CHAPTER: [{}] {}".format(handle, title or ''))
+        self.wait("CHAPTER: [{}] {}".format(handle, title or ""))
         self.new_window(handle, wd=self.wd, shell_cmd=shell_cmd)
         if title is not None:
             self.banner(handle, title)
@@ -458,7 +505,6 @@ kill server           K                Disconnects all clients and quits
     #### Overridable methods ####
     #############################
 
-
     def present(self):
         """Overridable; the main script for the presentation."""
         raise NotImplementedError("Presentations must define the present() method")
@@ -482,7 +528,6 @@ kill server           K                Disconnects all clients and quits
         """
         return []
 
-
     def dotfiles_templates(self):
         """Creates initial files in the working directory.
 
@@ -502,9 +547,7 @@ kill server           K                Disconnects all clients and quits
 
         """
         d = {
-            ".tmux.conf":
-
-        """## .tmux.conf
+            ".tmux.conf": """## .tmux.conf
 set-option -g status-interval 1
 set-option -g status-left-length 30
 set-option -g status-right '#[fg=cyan]%F %R'
@@ -539,6 +582,7 @@ PS1='\[\033[01;31m\]\u@\h\[\033[00m\]\$ '
         for i in self.media():
             d[os.path.basename(i)] = readfile(i)
         return d
+
     def environment(self):
         """Defines the environment tmux windows spawn with.
 
@@ -576,7 +620,6 @@ PS1='\[\033[01;31m\]\u@\h\[\033[00m\]\$ '
 
         """
         return "bash --rcfile {rcfile}".format(rcfile=self.dotfiles[".bashrc"])
-
 
 
 class WithMdp(object):
