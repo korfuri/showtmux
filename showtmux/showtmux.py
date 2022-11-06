@@ -555,11 +555,7 @@ set-option -g visual-activity on
 set-option -g status-justify left
 set-option -g status-bg black
 set-option -g status-fg white
-set-option -g message-bg white
-set-option -g message-fg black
 set-option -g update-environment "SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID SSH_CONNECTION"
-set-window-option -g window-status-current-fg red
-set-window-option -g window-status-current-attr bright
 
 set -g prefix C-a
 unbind-key C-b
